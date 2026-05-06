@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>사용법 — 궤도노반연구실 회의자료 작성 시스템</title>
+  <link rel="stylesheet" href="./assets/css/app.css?v=4" />
+  <style>
+    body { font-size: 15px; line-height: 1.7; }
+    .help-page { max-width: 920px; margin: 0 auto; padding: 24px 16px 80px; }
+    .help-page h1 { font-size: 26px; margin-bottom: 4px; color: #111827; }
+    .help-page h2 {
+      font-size: 20px; margin-top: 32px; padding-bottom: 8px;
+      border-bottom: 2px solid #1d4ed8; color: #1e40af;
+    }
+    .help-page h3 { font-size: 17px; margin-top: 22px; color: #1f2937; }
+    .help-page p, .help-page li { color: #374151; }
+    .role-tabs { display: flex; gap: 6px; margin: 16px 0; }
+    .role-tab {
+      padding: 10px 18px; border: 2px solid #d1d5db; border-bottom: none;
+      border-radius: 8px 8px 0 0; cursor: pointer;
+      background: #f3f4f6; color: #6b7280; font-weight: 600;
+    }
+    .role-tab.active { background: #fff; color: #1d4ed8; border-color: #1d4ed8; }
+    .role-content { display: none; border: 2px solid #1d4ed8; border-radius: 0 8px 8px 8px; padding: 20px; background: #fff; }
+    .role-content.active { display: block; }
+    .step {
+      background: #f9fafb; border-left: 4px solid #1d4ed8;
+      padding: 14px 18px; margin: 12px 0; border-radius: 0 6px 6px 0;
+    }
+    .step h3 { margin-top: 0; }
+    .step .num {
+      display: inline-block; background: #1d4ed8; color: #fff;
+      width: 28px; height: 28px; border-radius: 50%;
+      text-align: center; line-height: 28px; margin-right: 8px;
+      font-weight: 700;
+    }
+    .tip {
+      background: #eef2ff; border: 1px solid #c7d2fe;
+      border-radius: 6px; padding: 10px 14px; margin: 10px 0;
+      color: #3730a3;
+    }
+    .tip::before { content: "💡 "; font-weight: 700; }
+    .warn {
+      background: #fef3c7; border: 1px solid #fde68a;
+      border-radius: 6px; padding: 10px 14px; margin: 10px 0;
+      color: #92400e;
+    }
+    .warn::before { content: "⚠️ "; font-weight: 700; }
+    kbd {
+      background: #f3f4f6; border: 1px solid #d1d5db;
+      padding: 2px 6px; border-radius: 4px;
+      font-family: ui-monospace, monospace; font-size: 0.9em;
+    }
+    .example-box {
+      background: #fff; border: 1px dashed #9ca3af;
+      padding: 12px 16px; margin: 8px 0; border-radius: 6px;
+      font-family: "맑은 고딕", sans-serif;
+    }
+    .quick-start {
+      background: linear-gradient(135deg, #dbeafe 0%, #fff 100%);
+      border: 2px solid #1d4ed8; border-radius: 10px;
+      padding: 18px 22px; margin: 16px 0;
+    }
+    .quick-start h3 { color: #1e40af; margin-top: 0; }
+    .toc {
+      background: #f9fafb; border: 1px solid #e5e7eb;
+      padding: 14px 20px; border-radius: 8px; margin-bottom: 24px;
+    }
+    .toc ul { margin: 4px 0; padding-left: 22px; }
+    .toc a { color: #1d4ed8; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .url-box {
+      background: #1f2937; color: #e5e7eb; padding: 10px 14px;
+      border-radius: 6px; font-family: ui-monospace, monospace;
+      word-break: break-all; margin: 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div><strong>궤도노반연구실 회의자료 — 사용법</strong></div>
+    <nav class="nav">
+      <a href="./index.html">작성자 페이지</a>
+      <a href="./admin.html">관리자 페이지</a>
+    </nav>
+  </div>
+
+  <div class="help-page">
+
+    <h1>📖 회의자료 작성 시스템 사용법</h1>
+    <p class="muted">궤도노반연구실 주간/월간 간부회의자료 작성 도구</p>
+
+    <div class="quick-start">
+      <h3>🚀 빠르게 시작하기</h3>
+      <ol style="margin: 0; padding-left: 22px;">
+        <li><strong>본인이 작성자</strong> (주간 회의자료 채우는 분) → <a href="./index.html">작성자 페이지</a> 클릭</li>
+        <li><strong>본인이 관리자</strong> (회차 만들고 한글 파일 다운로드 받는 분) → <a href="./admin.html">관리자 페이지</a> 클릭</li>
+      </ol>
+    </div>
+
+    <div class="toc">
+      <strong>📑 목차</strong>
+      <ul>
+        <li><a href="#author">1. 작성자(연구원) 사용법</a></li>
+        <li><a href="#admin">2. 관리자 사용법</a></li>
+        <li><a href="#flow">3. 매주 운영 흐름</a></li>
+        <li><a href="#faq">4. 자주 묻는 질문 (FAQ)</a></li>
+      </ul>
+    </div>
+
+    <!-- ═════════════════ 작성자 ═════════════════ -->
+    <h2 id="author">1. 작성자(연구원) 사용법</h2>
+
+    <p>매주(또는 매월) 본인 담당 과제의 활동 내용을 입력하는 분들을 위한 안내입니다.</p>
+
+    <div class="step">
+      <h3><span class="num">1</span>접속</h3>
+      <p>아래 URL을 브라우저에 입력 (즐겨찾기에 등록해두면 편함):</p>
+      <div class="url-box">https://koochulji.github.io/track-roadbed-report/</div>
+      <p>처음 접속하면 자동으로 로그인되며 별도 비밀번호 없음. 회사 컴퓨터에서 안 열리면 시크릿 창(<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>)으로 시도.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span>본인 선택</h3>
+      <p>화면에 작성자 명단이 나옵니다. 본인 이름 클릭.</p>
+      <div class="tip">본인 이름이 안 보이면 관리자에게 작성자 등록 요청. 잘못 선택했으면 상단의 <strong>🔄 본인 변경</strong> 버튼으로 다시 선택 가능.</div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span>본인 담당 과제 자동으로 표시</h3>
+      <p>본인 선택 시 시스템이 <strong>책임자 이름이 들어간 과제들</strong>을 자동으로 펼쳐줍니다. 예:</p>
+      <div class="example-box">
+        지구철 선임 → 자동으로 다음 과제들 등장:<br>
+        <small>• [기본사업] 장대레일 성능기반 유지관리 체계 구축<br>
+        • [기본사업] 최적 설계기법을 활용한 궤도구성품...<br>
+        • [기본사업] Agentic AI 기반 궤도 설계 자동화 기술 개발</small>
+      </div>
+      <div class="tip">본인이 작성할 과제가 더 있으면 화면 하단 <strong>"+ 기존 과제 선택"</strong> 드롭다운으로 추가, 또는 <strong>"🆕 새 과제 만들기"</strong> 로 즉석 등록.</div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span>활동 내용 입력</h3>
+      <p>각 과제에 두 칸이 있음:</p>
+      <ul>
+        <li><strong>[지난 주 실적]</strong> — 이번 회의에서 보고할 지난 주(달) 한 일</li>
+        <li><strong>[이번 주 계획]</strong> — 다음 주(달)에 할 예정 일</li>
+      </ul>
+      <p>각 항목마다 4가지 칸:</p>
+      <ul>
+        <li><strong>수행내용</strong> (필수): "레일 RCI 기법 개발 관련 회의" 같이</li>
+        <li><strong>날짜</strong> (선택): "4/13" 또는 "~5/1"</li>
+        <li><strong>협업 기업/기관</strong> (선택): "동아대학교"</li>
+        <li><strong>수행자명</strong> (필수): 본인 이름</li>
+        <li><strong>중요</strong> 체크박스: 체크 시 <strong>주요 보고사항</strong>에 강조 표시 + 굵은 글씨</li>
+      </ul>
+      <p>한 항목 다 채우면 <strong>"+ 지난 주 실적 항목 추가"</strong> 또는 <strong>"+ 이번 주 계획 항목 추가"</strong> 버튼으로 다음 항목.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span>저장</h3>
+      <p>입력하는 동안 <strong>자동으로 저장</strong>됩니다. 따로 저장 버튼 누를 필요 없음. 우측 미리보기에서 실시간으로 출력 형태 확인 가능.</p>
+      <div class="warn">컴퓨터를 중간에 끄거나 다른 사람과 공유하면 입력 내용이 그대로 남아있으니 주의.</div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span>최종 제출</h3>
+      <p>다 작성하셨으면 화면 하단 <strong>"최종 제출"</strong> 버튼 클릭. 제출 후엔 잠금 상태가 되며, 수정하려면 <strong>"잠금 해제"</strong> 버튼 또는 관리자에게 요청.</p>
+    </div>
+
+    <!-- ═════════════════ 관리자 ═════════════════ -->
+    <h2 id="admin">2. 관리자 사용법</h2>
+
+    <p>회차를 만들고, 작성자/카테고리 관리, HWPX 파일 다운로드 등을 담당하는 관리자용 안내입니다.</p>
+
+    <div class="step">
+      <h3><span class="num">1</span>관리자 접속</h3>
+      <div class="url-box">https://koochulji.github.io/track-roadbed-report/admin.html</div>
+      <p>"Google로 로그인" 버튼 → 등록된 본인 Google 계정으로 인증.</p>
+      <div class="warn">관리자로 등록되지 않은 계정은 거부됩니다. UID 등록은 시스템 관리자(지구철 선임)에게 요청.</div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span>새 회차 만들기</h3>
+      <p>매주 새 보고를 받으려면:</p>
+      <ol>
+        <li>좌측 상단 <strong>"새 회차"</strong> 또는 <strong>"다른 회차로 교체"</strong> 클릭</li>
+        <li>양식 선택: <strong>주간</strong> 또는 <strong>월간</strong></li>
+        <li>회의일 선택 (예: 2026-04-27 — 회의가 열리는 날짜)</li>
+        <li>화면에 자동으로 표시된 보고기간(지난주/이번주) 확인</li>
+        <li><strong>확정</strong> 버튼 클릭</li>
+      </ol>
+      <div class="tip">회차 확정 시 이전 회차는 자동으로 아카이브로 이동.</div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span>작성자 명단 관리</h3>
+      <p><strong>"작성자 명단"</strong> 탭에서:</p>
+      <ul>
+        <li><strong>"디폴트 10명으로 리셋 / 시드"</strong>: 궤도노반연구실 기본 10명 한 번에 등록</li>
+        <li>이름 입력 후 <strong>"추가"</strong>: 개별 추가</li>
+        <li><strong>"삭제"</strong>: 한 명씩 제거</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span>과제(카테고리) 관리</h3>
+      <p><strong>"카테고리 관리"</strong> 탭에서:</p>
+      <ul>
+        <li>각 과제 행에 <strong>"✏️ 수정"</strong>: 종류/제목/담당자 변경</li>
+        <li><strong>"삭제"</strong>: 과제 제거</li>
+        <li><strong>↑ ↓</strong> 화살표: 표시 순서 조정</li>
+        <li>화면 하단 입력란으로 새 과제 추가</li>
+      </ul>
+      <div class="tip">담당자 칸에 작성자 이름을 정확히 입력하면, 그 작성자가 본인 페이지 들어왔을 때 해당 과제가 <strong>자동으로 떠 있음</strong>. 공동 책임자는 콤마로 구분: <code>배영훈 책임, 지구철 선임</code></div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span>제출 현황 확인 + HWPX 다운로드</h3>
+      <p><strong>"현재 회차"</strong> 탭에서:</p>
+      <ul>
+        <li>각 작성자별 제출 상태 확인 (미작성 / 임시저장 / 최종제출)</li>
+        <li>특정 작성자 잠금 해제 가능</li>
+        <li><strong>"HWPX 출력"</strong> 클릭 → 한글 파일 자동 생성 → 다운로드</li>
+      </ul>
+      <p>다운로드된 파일은 한글에서 열어 <strong>본부장 활동사항 / 실장 활동사항</strong> 부분만 직접 채우면 회의자료 완성.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span>아카이브 관리</h3>
+      <p><strong>"아카이브"</strong> 탭에서 지난 회차 목록 확인. 클릭하면 그 회차의 보고서 미리보기 + HWPX 다시 다운로드 가능. 잘못된 회차는 <strong>삭제</strong> 또는 <strong>활성 회차로 복원</strong>.</p>
+    </div>
+
+    <!-- ═════════════════ 운영 흐름 ═════════════════ -->
+    <h2 id="flow">3. 매주 운영 흐름</h2>
+
+    <table class="data" style="width:100%; margin-top: 12px;">
+      <thead>
+        <tr>
+          <th style="width:18%">시점</th>
+          <th style="width:18%">담당</th>
+          <th>작업</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>월요일 오전</td><td>관리자</td><td>새 회차 만들기 (이전 회차 자동 아카이브)</td></tr>
+        <tr><td>월~수</td><td>작성자</td><td>매일 본인 항목 입력 (자동저장)</td></tr>
+        <tr><td>수요일</td><td>작성자 → 실장</td><td>작성자 최종 제출 → 실장 검토</td></tr>
+        <tr><td>목요일 오전</td><td>관리자</td><td>HWPX 다운로드 → 본부 취합자에게 전달</td></tr>
+        <tr><td>다음 월요일</td><td>관리자</td><td>새 회차 만들기 (반복)</td></tr>
+      </tbody>
+    </table>
+    <div class="tip">실장은 수요일까지 모든 작성자의 제출 상황을 본인 페이지의 미리보기에서 확인 가능. 제출 안 한 작성자가 있으면 직접 알림.</div>
+
+    <!-- ═════════════════ FAQ ═════════════════ -->
+    <h2 id="faq">4. 자주 묻는 질문 (FAQ)</h2>
+
+    <h3>Q1. 페이지가 안 열려요.</h3>
+    <p>회사 방화벽이 일부 도메인을 막을 수 있습니다. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> 으로 시크릿 창에서 시도하거나 다른 브라우저(Chrome/Edge)로.</p>
+
+    <h3>Q2. 본인 이름이 명단에 없어요.</h3>
+    <p>관리자에게 "작성자 등록" 요청. 관리자는 [작성자 명단] 탭에서 추가.</p>
+
+    <h3>Q3. 본인 담당 과제가 자동으로 안 떠요.</h3>
+    <p>관리자가 그 과제의 <strong>담당자</strong> 필드에 본인 이름을 정확히 등록했는지 확인. 공동 담당자는 콤마(,)로 구분 (예: <code>지구철 선임, 정호연 선임</code>). 등록 후 작성자 페이지 새로고침 (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>).</p>
+
+    <h3>Q4. 입력 도중 화면이 멈추거나 커서가 사라져요.</h3>
+    <p>인터넷 일시 끊김 가능성. 잠시 후 자동 복구. 안 되면 새로고침 (입력 내용은 자동저장되어 있음).</p>
+
+    <h3>Q5. 잘못 제출했어요. 다시 수정하고 싶어요.</h3>
+    <p>본인 페이지에서 <strong>"잠금 해제"</strong> 버튼 클릭 → 다시 편집 가능. 안 보이면 관리자에게 요청.</p>
+
+    <h3>Q6. 한글 파일이 깨져 보여요.</h3>
+    <p>한글 2014 이후 버전 사용 권장. <strong>휴먼명조</strong> 폰트가 PC에 없으면 자동으로 다른 폰트로 대체됨 (한컴 기본 제공).</p>
+
+    <h3>Q7. 자동으로 뜬 카테고리를 다 안 쓰고 싶은데 어떻게 빼나요?</h3>
+    <p>각 과제 우측의 <strong>"카테고리 삭제"</strong> 버튼 클릭. 단, 페이지 새로고침 시 다시 자동으로 추가됨. 영구 삭제는 관리자에게 담당자 필드 수정 요청.</p>
+
+    <h3>Q8. 다른 사람의 입력을 볼 수 있나요?</h3>
+    <p>본인 페이지 우측 <strong>"미리보기"</strong>에 모든 작성자의 합본 보고서가 실시간으로 표시됩니다. 다른 사람이 무엇을 적었는지 보면서 본인 항목 정리 가능.</p>
+
+    <hr style="margin-top: 40px; border: none; border-top: 1px solid #d1d5db">
+    <p class="muted tight" style="margin-top: 16px">
+      문제가 계속되면 시스템 관리자(지구철 선임)에게 문의.<br>
+      이 페이지는 시스템 변경 시 갱신됩니다 — 즐겨찾기 등록 권장.
+    </p>
+
+  </div>
+</body>
+</html>
