@@ -43,32 +43,13 @@ service cloud.firestore {
 2. Sign-in method 탭 → **익명** 사용 설정
 3. 같은 탭 → **Google** 사용 설정 (지원 이메일: 본인 이메일)
 
-## 4. **★ Storage 활성화 (이미지 첨부용)**
+## 4. (생략) Storage 활성화 — 사용 안 함
 
-이건 주간 시스템에는 없던 새 단계. 이미지 업로드를 위해 필요.
+이미지 첨부는 **Firestore 안에 base64 로 inline 저장** 방식이라 Firebase Storage 활성화가 필요 없습니다. Spark (무료) 플랜으로 충분.
 
-1. 좌측 메뉴 → **Storage** → 시작하기
-2. 위치: **asia-northeast3 (Seoul)**
-3. 보안 규칙 탭 → 아래 붙여넣기 → 게시:
+⚠️ 단, 이 방식은 **이미지 1장당 700KB 이하**만 가능합니다 (Firestore 1MB 문서 한도 안). 큰 사진은 PC에서 압축 후 업로드하세요.
 
-```
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /rounds/{roundId}/submissions/{projectId}/images/{imageId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-        && request.resource.size < 5 * 1024 * 1024
-        && request.resource.contentType.matches('image/(png|jpeg)');
-    }
-    match /{allPaths=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-        && request.auth.uid in firestore.get(/databases/(default)/documents/config/admins).data.uids;
-    }
-  }
-}
-```
+> 추후 Storage 가 필요해지면 Blaze 요금제로 업그레이드 후 별도 작업.
 
 ## 5. 웹앱 등록 + config 받기
 1. ⚙️ → 프로젝트 설정 → 내 앱 → `</>` (웹) 클릭

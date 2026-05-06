@@ -64,12 +64,13 @@ function renderProjectSection(proj, sub) {
     h += renderProgressTableHtml(proj.activities, sub.progressTable || {});
   }
 
-  // 이미지
+  // 이미지 (base64 data URL 또는 downloadUrl 호환)
   if (Array.isArray(sub.images) && sub.images.length > 0) {
     h += `<div><strong>첨부 이미지</strong></div>`;
     for (const img of sub.images) {
+      const src = img.base64DataUrl || img.downloadUrl || '';
       h += `<div style="margin:6px 0">
-        <img src="${escape(img.downloadUrl)}" style="max-width:300px;max-height:200px;border:1px solid #d1d5db;border-radius:4px"/>
+        <img src="${escape(src)}" style="max-width:300px;max-height:200px;border:1px solid #d1d5db;border-radius:4px"/>
         ${img.caption ? `<div class="muted tight">${escape(img.caption)}</div>` : ''}
       </div>`;
     }

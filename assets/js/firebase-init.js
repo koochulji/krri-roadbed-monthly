@@ -6,13 +6,14 @@ import {
 import {
   getFirestore, serverTimestamp, Timestamp, doc, getDoc,
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
-import { getStorage } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
 import { firebaseConfig } from './firebase-config.js';
+
+// 주의: Firebase Storage 미사용 (Spark 무료 플랜으로 운영).
+// 이미지는 storage.js 의 base64 helper 로 Firestore 안에 inline 저장.
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
 export { serverTimestamp, Timestamp };
 
 let _user = null;
