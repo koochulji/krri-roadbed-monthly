@@ -1,8 +1,11 @@
-// JSZip으로 샘플 불변 파츠 + 동적 section0.xml을 패키징하여 .hwpx Blob 생성
+// hwpx-builder.js — JSZip 으로 양식 자산 + 동적 section0.xml 패키징
+//
+// 1차 구현: PrvImage.png 가 양식 HWPX 에 없을 수도 있으니 optional 처리.
+// 이미지 임베딩 (BinData/) 은 추후 작업.
+
 import { ASSETS, PREV_IMAGE_URL } from './hwpx-assets.js';
 import { buildSection0Xml } from './section-builder.js';
 
-// JSZip UMD가 window.JSZip 또는 전역으로 로드되어 있다고 가정 (index/admin html에서 CDN).
 function getJSZip() {
   if (typeof window !== 'undefined' && window.JSZip) return window.JSZip;
   throw new Error('JSZip 라이브러리가 로드되지 않았습니다.');
@@ -11,33 +14,50 @@ function getJSZip() {
 let _prvImageCache = null;
 async function loadPrvImage() {
   if (_prvImageCache) return _prvImageCache;
-  const res = await fetch(PREV_IMAGE_URL);
-  if (!res.ok) throw new Error('PrvImage.png 로드 실패');
-  _prvImageCache = await res.arrayBuffer();
+  try {
+    const res = await fetch(PREV_IMAGE_URL);
+    if (!res.ok) {
+      _prvImageCache = null;
+      return null;
+    }
+    _prvImageCache = await res.arrayBuffer();
+  } catch {
+    _prvImageCache = null;
+  }
   return _prvImageCache;
 }
 
-// masterCategories: 회차 snapshot 외에 합본할 마스터 카테고리 (선택)
-export async function buildHwpxBlob(round, submissions, { masterCategories = [] } = {}) {
+/**
+ * 월간 원장보고 HWPX Blob 생성.
+ *
+ * @param round — 회차 (year, month, baseDate, projectsSnapshot, ...)
+ * @param submissions — 제출 데이터 배열
+ * @param options.masterProjects — 마스터 projects (snapshot 부족 시 fallback)
+ */
+export async function buildHwpxBlob(round, submissions, options = {}) {
   const JSZip = getJSZip();
   const zip = new JSZip();
 
-  // 1) mimetype 맨 먼저, STORE
+  // 1) mimetype 맨 먼저 (STORE 압축)
   const mimetypeEntry = ASSETS.find(a => a.path === 'mimetype');
-  zip.file(mimetypeEntry.path, mimetypeEntry.content, { compression: 'STORE' });
+  if (mimetypeEntry) {
+    zip.file(mimetypeEntry.path, mimetypeEntry.content, { compression: 'STORE' });
+  }
 
-  // 2) 나머지 불변 파츠 (mimetype 제외)
+  // 2) 나머지 불변 파츠
   for (const a of ASSETS) {
     if (a.path === 'mimetype') continue;
     zip.file(a.path, a.content, { compression: 'DEFLATE' });
   }
 
-  // 3) Preview/PrvImage.png (바이너리)
+  // 3) Preview/PrvImage.png (있으면)
   const prvImage = await loadPrvImage();
-  zip.file('Preview/PrvImage.png', prvImage, { compression: 'STORE' });
+  if (prvImage) {
+    zip.file('Preview/PrvImage.png', prvImage, { compression: 'STORE' });
+  }
 
-  // 4) 동적 section0.xml
-  const sectionXml = buildSection0Xml(round, submissions, { masterCategories });
+  // 4) 동적 section0.xml — 사용자 입력 치환
+  const sectionXml = buildSection0Xml(round, submissions, options);
   zip.file('Contents/section0.xml', sectionXml, { compression: 'DEFLATE' });
 
   const blob = await zip.generateAsync({
@@ -48,8 +68,13 @@ export async function buildHwpxBlob(round, submissions, { masterCategories = [] 
   return blob;
 }
 
+/**
+ * 다운로드 파일명 제안.
+ * 예: "2026-05_원장보고_궤도노반연구실.hwpx"
+ */
 export function suggestFileName(round) {
-  const form = round.form === 'monthly' ? '월례' : '주례';
-  const base = round.baseDate || '';
-  return `${form}간부회의 보고자료_궤도노반연구실_${base}.hwpx`;
+  const ym = round?.year && round?.month
+    ? `${round.year}-${String(round.month).padStart(2, '0')}`
+    : (round?.baseDate || 'unknown');
+  return `${ym}_원장보고_궤도노반연구실.hwpx`;
 }
