@@ -6,11 +6,13 @@ import {
 import {
   getFirestore, serverTimestamp, Timestamp, doc, getDoc,
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import { getStorage } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
 import { firebaseConfig } from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 export { serverTimestamp, Timestamp };
 
 let _user = null;
