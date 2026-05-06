@@ -42,30 +42,49 @@ def find_red_blue_charprs(header_xml):
 
 
 def find_project_blocks(section_xml):
-    """section0.xml 에서 4개 과제 블록 위치 식별.
+    """section0.xml 에서 모든 과제 블록 위치 식별.
 
-    각 과제는 "(기본사업)" / "(국가R&D)" / "(수탁사업)" / "(기타)" 헤더로 시작.
-    제목이 같은 hp:t 안에 있는 경우(4번째 블록)와 별개의 hp:t 에 있는 경우(1~3번째 블록) 모두 처리.
+    매처:
+      - "(기본사업)"   → kind='basic'
+      - "(국가R&D)"    → kind='natl_rnd'
+      - "(수탁사업)"   → kind='consign' (드물게)
+      - "(정부수탁)"   → kind='consign' (양식 표기)
+      - "(기타)"       → kind='etc'
+      - "(AI를 ... 자동화 사례)" → kind='etc'
+
     반환: [{index, kind, title, start, end}]
     """
-    # group(1) = kind, group(2) = same hp:t 내 trailing text (보통 공백 또는 제목)
-    kind_pattern = re.compile(r'<hp:t>\s*\((기본사업|국가R&D|수탁사업|기타)\)([^<]*)</hp:t>')
+    KIND_MAP = {
+        '기본사업': 'basic',
+        '국가R&D': 'natl_rnd',
+        '수탁사업': 'consign',
+        '정부수탁': 'consign',
+        '기타': 'etc',
+    }
+    # 다양한 kind 마커 + 같은 hp:t 안 trailing 텍스트
+    kind_pattern = re.compile(
+        r'<hp:t>\s*\((기본사업|국가R&D|수탁사업|정부수탁|기타|AI를[^)]*)\)([^<]*)</hp:t>'
+    )
     matches = list(kind_pattern.finditer(section_xml))
     blocks = []
     for i, m in enumerate(matches):
         start = m.start()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(section_xml)
-        # 같은 hp:t 안의 trailing text 확인 — 비어있지 않으면 그것이 제목
-        trailing = m.group(2).strip()
-        if trailing:
-            title = trailing
+        kind_label = m.group(1)
+        trailing = (m.group(2) or '').strip()
+        if kind_label.startswith('AI'):
+            kind = 'etc'
+            title = 'AI를 활용한 업무 자동화 사례'
         else:
-            # 다음 hp:t 에 과제 제목이 있을 가능성
-            title_m = re.search(r'<hp:t>([^<]+)</hp:t>', section_xml[m.end():m.end() + 800])
-            title = title_m.group(1).strip() if title_m else '(제목 없음)'
+            kind = KIND_MAP.get(kind_label, 'etc')
+            if trailing:
+                title = trailing
+            else:
+                title_m = re.search(r'<hp:t>([^<]+)</hp:t>', section_xml[m.end():m.end() + 800])
+                title = title_m.group(1).strip() if title_m else '(제목 없음)'
         blocks.append({
             'index': i,
-            'kind': m.group(1),
+            'kind': kind,
             'title': title[:120],
             'start': start,
             'end': end,

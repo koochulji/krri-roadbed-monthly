@@ -319,12 +319,23 @@ function renderProjectsTab(s) {
       <th style="width:160px"></th>
     </tr></thead><tbody></tbody>`;
     const tb = tbl.querySelector('tbody');
+    // 계층 정렬: top-level 먼저, 각 top-level 바로 다음에 그 하위 sub-project 들 indent
     const sorted = [...s.projects].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const tops = sorted.filter(p => !p.parentProjectId);
+    const childrenByParent = new Map();
     for (const p of sorted) {
+      if (p.parentProjectId) {
+        if (!childrenByParent.has(p.parentProjectId)) childrenByParent.set(p.parentProjectId, []);
+        childrenByParent.get(p.parentProjectId).push(p);
+      }
+    }
+    const renderRow = (p, isChild = false) => {
       const tr = document.createElement('tr');
+      const indent = isChild ? '<span style="color:#9ca3af;margin-right:6px">└─</span>' : '';
+      const titleStyle = isChild ? 'padding-left:18px;color:#374151' : '';
       tr.innerHTML = `
         <td>${escape(KIND_NAMES[p.kind] || p.kind)}</td>
-        <td>${escape(p.title || '')}</td>
+        <td style="${titleStyle}">${indent}${escape(p.title || '')}</td>
         <td>${escape(p.owner || '')}</td>
         <td>${escape(p.org || '')}</td>
         <td>
@@ -338,6 +349,11 @@ function renderProjectsTab(s) {
         await removeProject(p.id);
       });
       tb.appendChild(tr);
+    };
+    for (const p of tops) {
+      renderRow(p, false);
+      const children = childrenByParent.get(p.id) || [];
+      for (const c of children) renderRow(c, true);
     }
     box.appendChild(tbl);
   }

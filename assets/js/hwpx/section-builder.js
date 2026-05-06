@@ -183,11 +183,14 @@ function substituteProjectBlock(blockXml, project, submission) {
  */
 export function buildSection0Xml(round, submissions, options = {}) {
   let xml = SECTION_TEMPLATE_XML;
-  const projects = round?.projectsSnapshot || options.masterProjects || [];
+  const allProjects = round?.projectsSnapshot || options.masterProjects || [];
   const subMap = new Map((submissions || []).map(s => [s._id, s]));
 
-  // 양식의 4개 슬롯에 projects 처음 4개를 매핑 (순서 유지 가정)
-  const blocksToFill = Math.min(PROJECT_BLOCKS.length, projects.length);
+  // sub-project (parentProjectId 가 있는 것) 는 양식에서 별도 블록 없으므로 매핑 대상 제외.
+  // top-level 만 PROJECT_BLOCKS 와 1:1 매핑.
+  // (Phase 2: sub-project 데이터를 parent block 안의 2-1, 2-2 위치에 inline 주입)
+  const topLevel = allProjects.filter(p => !p.parentProjectId);
+  const blocksToFill = Math.min(PROJECT_BLOCKS.length, topLevel.length);
 
   // 끝에서부터 처리 — 인덱스 시프트 방지
   const sortedBlocks = [...PROJECT_BLOCKS]
@@ -195,7 +198,7 @@ export function buildSection0Xml(round, submissions, options = {}) {
     .sort((a, b) => b.start - a.start);
 
   for (const block of sortedBlocks) {
-    const proj = projects[block.index];
+    const proj = topLevel[block.index];
     if (!proj) continue;
     const sub = subMap.get(proj.id) || {};
     const blockXml = xml.substring(block.start, block.end);

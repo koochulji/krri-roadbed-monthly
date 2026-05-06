@@ -147,19 +147,42 @@ function renderProjectPicker(s) {
   const list = document.createElement('div');
   list.style.display = 'grid';
   list.style.gap = '8px';
+
+  // 계층 정렬: top-level + 그 하위 sub-projects 묶음
+  const tops = projects.filter(p => !p.parentProjectId);
+  const childrenByParent = new Map();
   for (const p of projects) {
+    if (p.parentProjectId) {
+      if (!childrenByParent.has(p.parentProjectId)) childrenByParent.set(p.parentProjectId, []);
+      childrenByParent.get(p.parentProjectId).push(p);
+    }
+  }
+
+  const makeBtn = (p, isChild = false) => {
     const btn = document.createElement('button');
     btn.className = 'btn';
     btn.style.textAlign = 'left';
     btn.style.padding = '12px';
-    btn.innerHTML = `<strong>(${escape(KIND_NAMES[p.kind] || p.kind)})</strong> ${escape(p.title)}<br>
+    if (isChild) {
+      btn.style.marginLeft = '24px';
+      btn.style.background = '#fafbff';
+      btn.style.borderColor = '#cbd5ff';
+    }
+    const prefix = isChild ? '<span style="color:#9ca3af">└─ </span>' : '';
+    btn.innerHTML = `${prefix}<strong>(${escape(KIND_NAMES[p.kind] || p.kind)})</strong> ${escape(p.title)}<br>
       <span class="muted" style="font-size:12px">책임자: ${escape(p.owner)} · ${escape(p.org || '')}</span>`;
     btn.addEventListener('click', () => {
       activeProjectId = p.id;
       mySubmission = null;
       render();
     });
-    list.appendChild(btn);
+    return btn;
+  };
+
+  for (const p of tops) {
+    list.appendChild(makeBtn(p, false));
+    const children = childrenByParent.get(p.id) || [];
+    for (const c of children) list.appendChild(makeBtn(c, true));
   }
   wrap.appendChild(list);
   return wrap;

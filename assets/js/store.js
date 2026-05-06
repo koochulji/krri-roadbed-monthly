@@ -24,9 +24,17 @@ export const DEFAULT_AUTHORS = [
 const _RANGE = { rangeStart: '2026-01-01', rangeEnd: '2028-12-31' };
 const _BUDGET = { yearAmount: '', totalAmount: '' };
 
-// 양식 (업무보고 양식_궤도노반연구실.hwpx) 기준 12개 과제
+// 양식 (업무보고 양식_궤도노반연구실.hwpx) 기준 과제 시드.
+//
+// 구조:
+//   - top-level 10개 (블록 매핑됨, HWPX 출력에 포함)
+//   - sub-project 2개 ([2-1], [2-2]) — parentTitle 로 부모 식별, seed 시 parentProjectId 로 변환
+//
+// sub-project 는 parent 의 "2. 연구추진현황" 안에 inline 으로 들어가는 양식이지만
+// 1차 구현은 admin/author UI 에서 hierarchy 표시만, HWPX 출력은 Phase 2 로 이연.
+
 export const DEFAULT_PROJECTS = [
-  // ───── 기본사업 ─────
+  // ───── 기본사업 (top-level) ─────
   {
     kind: 'basic',
     title: '자갈궤도기반 고속철도 운행속도 향상을 위한 궤도인프라 기술연구',
@@ -49,22 +57,6 @@ export const DEFAULT_PROJECTS = [
     org: '철도구조연구실',
     ..._RANGE, budget: _BUDGET,
     goal: '철도인프라 경제성·안전성 향상 위한 AI-디지털 기반 철도인프라 핵심기술 개발',
-    techDefinition: '', techFeatures: [], activities: [],
-  },
-  {
-    kind: 'basic',
-    title: '[2-1] 매니플레이터를 이용한 친환경 터널굴착 기술 개발',
-    owner: '고태훈 수석',
-    org: '궤도노반연구실 (신정열 책임 과제 산하)',
-    ..._RANGE, budget: _BUDGET, goal: '',
-    techDefinition: '', techFeatures: [], activities: [],
-  },
-  {
-    kind: 'basic',
-    title: '[2-2] Agentic AI 기반 궤도 설계 자동화 기술 개발',
-    owner: '지구철 선임',
-    org: '궤도노반연구실 (신정열 책임 과제 산하)',
-    ..._RANGE, budget: _BUDGET, goal: '',
     techDefinition: '', techFeatures: [], activities: [],
   },
   {
@@ -135,6 +127,27 @@ export const DEFAULT_PROJECTS = [
     ..._RANGE, budget: _BUDGET, goal: '',
     techDefinition: '', techFeatures: [], activities: [],
   },
+
+  // ───── Sub-projects (신정열 과제 산하) ─────
+  // parentTitle 로 부모 식별 → seedDefaultProjects 에서 parentProjectId 로 변환
+  {
+    kind: 'basic',
+    title: '[2-1] 매니플레이터를 이용한 친환경 터널굴착 기술 개발',
+    owner: '고태훈 수석',
+    org: '궤도노반연구실',
+    parentTitle: 'AI-디지털 기반 철도인프라 안전향상 및 건설관리 효율화 기술개발',
+    ..._RANGE, budget: _BUDGET, goal: '',
+    techDefinition: '', techFeatures: [], activities: [],
+  },
+  {
+    kind: 'basic',
+    title: '[2-2] Agentic AI 기반 궤도 설계 자동화 기술 개발',
+    owner: '지구철 선임',
+    org: '궤도노반연구실',
+    parentTitle: 'AI-디지털 기반 철도인프라 안전향상 및 건설관리 효율화 기술개발',
+    ..._RANGE, budget: _BUDGET, goal: '',
+    techDefinition: '', techFeatures: [], activities: [],
+  },
 ];
 
 export const KIND_NAMES = {
@@ -181,19 +194,37 @@ export async function setProjects(items) {
   await setDoc(projectsRef, { items, updatedAt: serverTimestamp() }, { merge: true });
 }
 export async function seedDefaultProjects() {
-  const items = DEFAULT_PROJECTS.map((p, i) => ({
-    id: uuid(),
-    ...p,
-    isDefault: true,
-    order: i,
-    activities: (p.activities ?? []).map(a => ({ ...a, id: uuid() })),
-  }));
+  // 1단계: 모든 과제에 id 부여 (title → id 매핑)
+  const titleToId = new Map();
+  for (const p of DEFAULT_PROJECTS) {
+    titleToId.set(p.title, uuid());
+  }
+  // 2단계: parentTitle → parentProjectId 변환
+  const items = DEFAULT_PROJECTS.map((p, i) => {
+    const { parentTitle, ...rest } = p;
+    const parentProjectId = parentTitle ? (titleToId.get(parentTitle) ?? null) : null;
+    return {
+      id: titleToId.get(p.title),
+      ...rest,
+      parentProjectId,
+      isDefault: true,
+      order: i,
+      activities: (p.activities ?? []).map(a => ({ ...a, id: uuid() })),
+    };
+  });
   await setProjects(items);
 }
 export async function addProject(data) {
   const snap = await getDoc(projectsRef);
   const items = snap.exists() ? [...(snap.data().items ?? [])] : [];
-  items.push({ id: uuid(), order: items.length, isDefault: false, activities: [], ...data });
+  items.push({
+    id: uuid(),
+    order: items.length,
+    isDefault: false,
+    activities: [],
+    parentProjectId: null,
+    ...data,
+  });
   await setProjects(items);
 }
 export async function updateProject(id, patch) {
