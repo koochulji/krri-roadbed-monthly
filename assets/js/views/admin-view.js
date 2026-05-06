@@ -11,7 +11,7 @@ import {
   createAndConfirmMonthlyRound, archiveCurrentRound,
   restoreArchivedRound, deleteRoundPermanently,
   unlockSubmission, approveSubmission, getAllSubmissions,
-  KIND_NAMES,
+  KIND_NAMES, DEFAULT_PROJECTS, DEFAULT_AUTHORS,
 } from '../store.js';
 import { getState, patchState, subscribe } from '../state.js';
 import { renderPreview } from './preview-render.js';
@@ -258,11 +258,11 @@ function renderNewRoundForm(s) {
       }
       const st = getState();
       if (!st.projects || st.projects.length === 0) {
-        if (!confirm('과제 명단이 비어 있습니다. 디폴트 4개로 시드하고 계속할까요?')) return;
+        if (!confirm(`과제 명단이 비어 있습니다. 디폴트 ${DEFAULT_PROJECTS.length}개로 시드하고 계속할까요?`)) return;
         await seedDefaultProjects();
       }
       if (!st.authors || st.authors.length === 0) {
-        if (!confirm('책임자 명단이 비어 있습니다. 디폴트 4명으로 시드하고 계속할까요?')) return;
+        if (!confirm(`책임자 명단이 비어 있습니다. 디폴트 ${DEFAULT_AUTHORS.length}명으로 시드하고 계속할까요?`)) return;
         await seedDefaultAuthors();
       }
       if (st.current?.roundId) {
@@ -294,14 +294,14 @@ function renderProjectsTab(s) {
   toolbar.className = 'row';
   toolbar.style.marginBottom = '8px';
   toolbar.innerHTML = `
-    <button class="btn" id="btn-seed-projects">디폴트 4개로 리셋 / 시드</button>
-    <span class="muted tight">양식 기본 4개 과제 (2번 신정열 책임 포함). 매월 동일.</span>
+    <button class="btn" id="btn-seed-projects">디폴트 ${DEFAULT_PROJECTS.length}개로 리셋 / 시드</button>
+    <span class="muted tight">양식 기본 ${DEFAULT_PROJECTS.length}개 과제 (top-level ${DEFAULT_PROJECTS.filter(p => !p.parentTitle).length}개 + sub-project ${DEFAULT_PROJECTS.filter(p => p.parentTitle).length}개).</span>
   `;
   box.appendChild(toolbar);
   setTimeout(() => {
     const b = $('#btn-seed-projects', toolbar);
     if (b) b.addEventListener('click', async () => {
-      if (!confirm('과제 명단을 디폴트 4개로 덮어씁니다. 계속할까요?')) return;
+      if (!confirm(`과제 명단을 디폴트 ${DEFAULT_PROJECTS.length}개로 덮어씁니다. 계속할까요?`)) return;
       await seedDefaultProjects();
     });
   }, 0);
@@ -468,14 +468,14 @@ function renderAuthorsTab(s) {
   toolbar.className = 'row';
   toolbar.style.marginBottom = '8px';
   toolbar.innerHTML = `
-    <button class="btn" id="btn-seed-authors">디폴트 4명으로 리셋 / 시드</button>
+    <button class="btn" id="btn-seed-authors">디폴트 ${DEFAULT_AUTHORS.length}명으로 리셋 / 시드</button>
     <span class="muted tight">양식 기본 4명. 추가 책임자가 있으면 아래에서 추가.</span>
   `;
   box.appendChild(toolbar);
   setTimeout(() => {
     const b = $('#btn-seed-authors', toolbar);
     if (b) b.addEventListener('click', async () => {
-      if (!confirm('책임자 명단을 디폴트 4명으로 덮어씁니다. 계속할까요?')) return;
+      if (!confirm(`책임자 명단을 디폴트 ${DEFAULT_AUTHORS.length}명으로 덮어씁니다. 계속할까요?`)) return;
       await seedDefaultAuthors();
     });
   }, 0);
