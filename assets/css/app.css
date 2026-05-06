@@ -152,3 +152,30 @@ dialog .dlg-actions { padding: 12px 16px; border-top: 1px solid var(--border); d
 }
 .progress-table td.month-cell.on { background: #d9e1f2; }
 .progress-table td.month-cell:hover:not(.on) { background: #f3f4f6; }
+
+/* ─── 이미지 업로더 ─── */
+.image-uploader { margin: 8px 0; }
+.image-list { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0; }
+.image-card {
+  padding: 8px; border: 1px solid #e5e7eb;
+  border-radius: 6px; background: #f9fafb;
+  display: flex; flex-direction: column; gap: 4px;
+  width: 220px;
+}
+.image-card .image-preview {
+  max-width: 200px; max-height: 160px;
+  border: 1px solid #d1d5db; border-radius: 4px;
+  object-fit: contain; background: #fff;
+}
+.image-card .cap-input {
+  width: 100%; padding: 4px 6px;
+  border: 1px solid #d1d5db; border-radius: 4px;
+  font-size: 12px;
+}
+.image-uploader-ctrl {
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  padding: 8px 0; border-top: 1px solid #e5e7eb; margin-top: 8px;
+}
+.image-uploader-ctrl .pos-sel {
+  padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 4px;
+}
