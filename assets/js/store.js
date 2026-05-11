@@ -232,6 +232,24 @@ export async function updateProject(id, patch) {
   const items = snap.exists() ? (snap.data().items ?? []) : [];
   await setProjects(items.map(p => p.id === id ? { ...p, ...patch } : p));
 }
+
+/**
+ * 작성자(책임자) 가 자기 과제의 정적 필드를 수정할 때 호출.
+ * /config/projects 와 /rounds/{currentRoundId}/projectsSnapshot 양쪽을 동기화.
+ */
+export async function updateProjectAndRoundSnapshot(projectId, patch) {
+  // 1) 마스터 project 업데이트
+  await updateProject(projectId, patch);
+  // 2) 활성 회차의 projectsSnapshot 도 동기화
+  const cur = await getDoc(currentRef);
+  const rid = cur.exists() ? cur.data()?.roundId : null;
+  if (!rid) return;
+  const rs = await getDoc(roundRef(rid));
+  if (!rs.exists()) return;
+  const snap = rs.data().projectsSnapshot ?? [];
+  const newSnap = snap.map(p => p.id === projectId ? { ...p, ...patch } : p);
+  await updateDoc(roundRef(rid), { projectsSnapshot: newSnap });
+}
 export async function removeProject(id) {
   const snap = await getDoc(projectsRef);
   const items = snap.exists() ? (snap.data().items ?? []) : [];

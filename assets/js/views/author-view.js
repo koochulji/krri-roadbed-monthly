@@ -4,6 +4,7 @@ import {
   subscribeAuthors, subscribeProjects, subscribeCurrent, subscribeRound,
   subscribeSubmissions, getAllSubmissions, saveSubmissionDraft,
   finalSubmitSubmission, unlockSubmission, KIND_NAMES,
+  updateProjectAndRoundSnapshot,
 } from '../store.js';
 import { getState, patchState, subscribe } from '../state.js';
 import { renderPreview } from './preview-render.js';
@@ -236,41 +237,139 @@ function renderProjectForm(s, sub) {
   return wrap;
 }
 
-// 1. 연구 개요
+// 정적 필드 변경 디바운스 저장 (project 수정 → master + round.snapshot 동기화)
+let projectSaveTimer = null;
+function scheduleProjectSave(projectId, patch) {
+  clearTimeout(projectSaveTimer);
+  projectSaveTimer = setTimeout(async () => {
+    try {
+      await updateProjectAndRoundSnapshot(projectId, patch);
+    } catch (e) {
+      console.error('과제 정적 필드 저장 실패:', e);
+      alert('저장 실패: ' + (e?.message || e));
+    }
+  }, 1200);
+}
+
+// 1. 연구 개요 — 모든 필드 편집 가능
 function renderOverview(proj) {
   const box = document.createElement('div');
   box.className = 'panel';
-  box.innerHTML = `
+  // 헤더만 먼저
+  const head = document.createElement('div');
+  head.innerHTML = `
     <h3>1. 연구 개요</h3>
-    <div class="muted tight" style="margin-bottom:8px">정적 정보 — 관리자 페이지에서만 수정 가능.</div>
-    <ul style="margin:0">
-      <li>연구책임자: ${escape(proj.owner)} / ${escape(proj.org || '')}</li>
-      <li>연구기간: ${escape(proj.rangeStart || '')} ~ ${escape(proj.rangeEnd || '')}</li>
-      <li>연구비: (당해) ${escape(proj.budget?.yearAmount || '___')}백만원, (총) ${escape(proj.budget?.totalAmount || '___')}백만원</li>
-      <li>연구목표: ${escape(proj.goal || '(미입력)')}</li>
-    </ul>
+    <div class="muted tight" style="margin-bottom:8px">이 섹션은 매월 거의 동일 — 한 번 입력하면 다음 달까지 유지됩니다. 변경 시 자동 저장.</div>
   `;
+  box.appendChild(head);
+
+  // 헬퍼: 즉시 patch 갱신
+  const accumulated = {};  // 변경 분만 모아 저장
+  function commit(field, value) {
+    proj[field] = value;
+    accumulated[field] = value;
+    scheduleProjectSave(proj.id, { ...accumulated });
+  }
+  function commitBudget(subField, value) {
+    proj.budget = proj.budget || {};
+    proj.budget[subField] = value;
+    accumulated.budget = { ...proj.budget };
+    scheduleProjectSave(proj.id, { ...accumulated });
+  }
+
+  // 책임자
+  const f1 = document.createElement('div'); f1.className = 'field';
+  f1.innerHTML = `<label>연구책임자</label>`;
+  const i1 = document.createElement('input');
+  i1.type = 'text'; i1.value = proj.owner || ''; i1.placeholder = '예: 지구철 선임';
+  i1.addEventListener('input', () => commit('owner', i1.value.trim()));
+  f1.appendChild(i1); box.appendChild(f1);
+
+  // 소속실
+  const f2 = document.createElement('div'); f2.className = 'field';
+  f2.innerHTML = `<label>소속실</label>`;
+  const i2 = document.createElement('input');
+  i2.type = 'text'; i2.value = proj.org || ''; i2.placeholder = '예: 궤도노반연구실';
+  i2.addEventListener('input', () => commit('org', i2.value.trim()));
+  f2.appendChild(i2); box.appendChild(f2);
+
+  // 연구기간 (start ~ end)
+  const f3 = document.createElement('div'); f3.className = 'row';
+  f3.innerHTML = `<div class="field grow"><label>연구 시작일</label></div><div class="field grow"><label>연구 종료일</label></div>`;
+  const i3 = document.createElement('input');
+  i3.type = 'date'; i3.value = proj.rangeStart || '';
+  i3.addEventListener('input', () => commit('rangeStart', i3.value));
+  f3.children[0].appendChild(i3);
+  const i4 = document.createElement('input');
+  i4.type = 'date'; i4.value = proj.rangeEnd || '';
+  i4.addEventListener('input', () => commit('rangeEnd', i4.value));
+  f3.children[1].appendChild(i4);
+  box.appendChild(f3);
+
+  // 연구비
+  const f4 = document.createElement('div'); f4.className = 'row';
+  f4.innerHTML = `<div class="field grow"><label>당해 연구비 (백만원)</label></div><div class="field grow"><label>총 연구비 (백만원)</label></div>`;
+  const i5 = document.createElement('input');
+  i5.type = 'text'; i5.value = proj.budget?.yearAmount || ''; i5.placeholder = '예: 100';
+  i5.addEventListener('input', () => commitBudget('yearAmount', i5.value.trim()));
+  f4.children[0].appendChild(i5);
+  const i6 = document.createElement('input');
+  i6.type = 'text'; i6.value = proj.budget?.totalAmount || ''; i6.placeholder = '예: 500';
+  i6.addEventListener('input', () => commitBudget('totalAmount', i6.value.trim()));
+  f4.children[1].appendChild(i6);
+  box.appendChild(f4);
+
+  // 연구목표
+  const f5 = document.createElement('div'); f5.className = 'field';
+  f5.innerHTML = `<label>연구목표</label>`;
+  const t5 = document.createElement('textarea');
+  t5.rows = 3; t5.value = proj.goal || ''; t5.placeholder = '연구의 최종 목표를 1~2 문장으로 작성';
+  t5.addEventListener('input', () => commit('goal', t5.value));
+  f5.appendChild(t5); box.appendChild(f5);
+
   return box;
 }
 
-// 2-1. 기술 정의/특징
+// 2-1. 기술 정의/특징 — 편집 가능
 function renderTechSection(proj) {
   const box = document.createElement('div');
   box.className = 'panel';
-  box.innerHTML = `
+  const head = document.createElement('div');
+  head.innerHTML = `
     <h3>2-1. 기술 정의 및 특징</h3>
-    <div class="muted tight" style="margin-bottom:8px">정적 정보 — 관리자 페이지에서만 수정 가능.</div>
-    <div style="white-space:pre-wrap">${escape(proj.techDefinition || '(미입력)')}</div>
+    <div class="muted tight" style="margin-bottom:8px">매월 거의 동일 — 변경 시 자동 저장.</div>
   `;
-  if (Array.isArray(proj.techFeatures) && proj.techFeatures.length > 0) {
-    const ul = document.createElement('ul');
-    for (const f of proj.techFeatures) {
-      const li = document.createElement('li');
-      li.textContent = f;
-      ul.appendChild(li);
-    }
-    box.appendChild(ul);
+  box.appendChild(head);
+
+  const accumulated = {};
+  function commit(field, value) {
+    proj[field] = value;
+    accumulated[field] = value;
+    scheduleProjectSave(proj.id, { ...accumulated });
   }
+
+  // 기술 정의 본문
+  const f1 = document.createElement('div'); f1.className = 'field';
+  f1.innerHTML = `<label>기술 정의 (본문)</label>`;
+  const t1 = document.createElement('textarea');
+  t1.rows = 4; t1.value = proj.techDefinition || '';
+  t1.placeholder = '연구 대상 기술을 정의하고 특징을 본문으로 작성';
+  t1.addEventListener('input', () => commit('techDefinition', t1.value));
+  f1.appendChild(t1); box.appendChild(f1);
+
+  // 세부 항목 (* 별표 리스트) — 한 줄에 하나씩
+  const f2 = document.createElement('div'); f2.className = 'field';
+  f2.innerHTML = `<label>세부 특징 항목 (한 줄에 하나씩)</label>`;
+  const t2 = document.createElement('textarea');
+  t2.rows = 4;
+  t2.value = (proj.techFeatures || []).join('\n');
+  t2.placeholder = '예시:\n고속철도 속도향상을 위한 궤도틀림 관리기준 개정\n자갈궤도 기반 350kph급 인프라\n...';
+  t2.addEventListener('input', () => {
+    const arr = t2.value.split('\n').map(s => s.trim()).filter(Boolean);
+    commit('techFeatures', arr);
+  });
+  f2.appendChild(t2); box.appendChild(f2);
+
   return box;
 }
 
