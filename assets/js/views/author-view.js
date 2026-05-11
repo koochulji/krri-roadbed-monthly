@@ -441,16 +441,36 @@ function renderActivityRow(sub, field, idx, locked, placeholder) {
   return row;
 }
 
-// 2-3. 12개월 진행표
+// 2-3. 12개월 진행표 — 활동 행 추가/수정/삭제 가능
 function renderProgressSection(proj, sub, locked) {
   const box = document.createElement('div');
   box.className = 'panel';
-  box.innerHTML = `<h3>2-3. 12개월 진행표 (셀 클릭 → 음영 토글)</h3>
-    <div class="muted tight">활동별로 진행 중이거나 완료된 월의 셀을 클릭. 이전 달 상태는 자동 누적됨.</div>`;
+  box.innerHTML = `<h3>2-3. 12개월 진행표</h3>
+    <div class="muted tight">활동별로 진행 중이거나 완료된 월의 셀을 클릭하여 음영 표시. "+ 활동 추가"로 행 추가, ✕ 로 삭제. 이전 달 상태는 자동 누적됨.</div>`;
+  // 안전: activities 배열 보장
+  if (!Array.isArray(proj.activities)) proj.activities = [];
+
+  let actSaveTimer = null;
   const tableEl = renderProgressTable({
-    activities: proj.activities || [],
+    activities: proj.activities,
     progressTable: sub.progressTable || {},
+    newActivityId: () => uuid(),
     onChange: () => { scheduleSave(); updatePreviewOnly(); },
+    onActivitiesChange: (newActivities) => {
+      // 활동 행 변경 — project 정적 필드 저장 (디바운스)
+      // 새 배열 참조를 별도로 만들어 저장 (mutation 안전성)
+      const arr = newActivities.map(a => ({ id: a.id, name: (a.name || '').trim() }));
+      proj.activities = arr;
+      clearTimeout(actSaveTimer);
+      actSaveTimer = setTimeout(() => {
+        updateProjectAndRoundSnapshot(proj.id, { activities: arr })
+          .catch(e => {
+            console.error('활동 항목 저장 실패:', e);
+            alert('활동 항목 저장 실패: ' + (e?.message || e));
+          });
+      }, 1200);
+      updatePreviewOnly();
+    },
     locked,
   });
   box.appendChild(tableEl);
